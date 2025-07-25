@@ -1,85 +1,49 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Generator 2D + Filter + Shio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Generator 2D + Filter Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      min-height: 100vh;
-    }
-
+    body { margin: 0; font-family: Arial, sans-serif; display: flex; min-height: 100vh; }
     .sidebar {
       background-color: #333;
       color: white;
       padding: 20px;
       width: 250px;
     }
-
-    .sidebar h2 {
-      margin-top: 0;
-    }
-
     .main {
       flex: 1;
       padding: 20px;
     }
-
-    input, button {
+    input, select {
       padding: 10px;
       margin: 8px 0;
       width: 100%;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-
-    button {
-      background-color: #008cba;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #005f73;
-    }
-
-    textarea {
-      width: 100%;
-      height: 160px;
-      margin-top: 10px;
       font-size: 16px;
       box-sizing: border-box;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    td, th {
       border: 1px solid #ccc;
       padding: 6px;
       text-align: center;
       font-size: 14px;
     }
-
-    th {
-      background-color: #f4f4f4;
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
     }
-
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+    }
     @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
-
-      .sidebar {
-        width: 100%;
-      }
+      body { flex-direction: column; }
+      .sidebar { width: 100%; }
     }
   </style>
 </head>
@@ -89,54 +53,62 @@
   <h2>Menu</h2>
   <ul>
     <li>Generator 2D</li>
-    <li>Filter Angka Main</li>
-    <li>Filter Ekor</li>
-    <li>Output Kombinasi</li>
+    <li>Angka Main</li>
+    <li>Ekor Main</li>
+    <li>Filter Tambahan</li>
+    <li>Output Grid</li>
     <li>Distribusi Shio</li>
   </ul>
 </div>
 
 <div class="main">
-  <h2>Generator Kombinasi 2D + Filter + Twin + Shio</h2>
+  <h2>Generator Kombinasi 2D + Filter + Shio</h2>
 
   <label>Masukkan 5–9 digit utama (tanpa spasi):</label>
-  <input type="text" id="digitInput" placeholder="Contoh: 1234567" maxlength="9">
+  <input type="text" id="digitInput" placeholder="Contoh: 1234567" maxlength="9" oninput="generate()" />
 
   <label>Masukkan Angka Main (4–6 digit):</label>
-  <input type="text" id="filterInput" placeholder="Contoh: 124578" maxlength="6">
+  <input type="text" id="filterInput" placeholder="Contoh: 124578" maxlength="6" oninput="generate()" />
 
   <label>Masukkan Ekor Main (4–6 digit):</label>
-  <input type="text" id="tailInput" placeholder="Contoh: 1347" maxlength="6">
+  <input type="text" id="tailInput" placeholder="Contoh: 1347" maxlength="6" oninput="generate()" />
 
-  <button onclick="generate()">Hasilkan Kombinasi 2D</button>
+  <div class="checkbox-group">
+    <label><input type="checkbox" id="filterGenap" onchange="generate()" /> Genap Saja</label>
+    <label><input type="checkbox" id="filterGanjil" onchange="generate()" /> Ganjil Saja</label>
+    <label><input type="checkbox" id="filterKepala" onchange="generate()" /> Kepala = Ekor Main</label>
+    <label><input type="checkbox" id="filterBarisGanjil" onchange="generate()" /> Baris Ganjil</label>
+  </div>
 
   <p>Total Kombinasi: <span id="totalCount">0</span></p>
-  <textarea id="output" readonly></textarea>
+  <table id="resultTable"></table>
 
   <h3>Distribusi Shio</h3>
-  <table>
-    <thead>
-      <tr><th>Shio</th><th>Angka</th></tr>
-    </thead>
+  <table class="shio-table">
+    <thead><tr><th>Shio</th><th>Angka</th></tr></thead>
     <tbody id="shioTable"></tbody>
   </table>
 </div>
 
 <script>
 const shioMap = {
-  "Tikus":  ["01","13","25","37","49","61","73","85","97"],
+  "Tikus": ["01","13","25","37","49","61","73","85","97"],
   "Kerbau": ["02","14","26","38","50","62","74","86","98"],
-  "Macan":  ["03","15","27","39","51","63","75","87","99"],
-  "Kelinci":["04","16","28","40","52","64","76","88","00"],
-  "Naga":   ["05","17","29","41","53","65","77","89"],
-  "Ular":   ["06","18","30","42","54","66","78","90"],
-  "Kuda":   ["07","19","31","43","55","67","79","91"],
-  "Kambing":["08","20","32","44","56","68","80","92"],
+  "Macan": ["03","15","27","39","51","63","75","87","99"],
+  "Kelinci": ["04","16","28","40","52","64","76","88","00"],
+  "Naga": ["05","17","29","41","53","65","77","89"],
+  "Ular": ["06","18","30","42","54","66","78","90"],
+  "Kuda": ["07","19","31","43","55","67","79","91"],
+  "Kambing": ["08","20","32","44","56","68","80","92"],
   "Monyet": ["09","21","33","45","57","69","81","93"],
-  "Ayam":   ["10","22","34","46","58","70","82","94"],
+  "Ayam": ["10","22","34","46","58","70","82","94"],
   "Anjing": ["11","23","35","47","59","71","83","95"],
-  "Babi":   ["12","24","36","48","60","72","84","96"]
+  "Babi": ["12","24","36","48","60","72","84","96"]
 };
+
+function isGenap(num) {
+  return parseInt(num) % 2 === 0;
+}
 
 function generate() {
   const digitRaw = document.getElementById("digitInput").value.trim();
@@ -147,52 +119,73 @@ function generate() {
   const filterDigits = filterRaw.split("").filter(d => /^[0-9]$/.test(d));
   const tailDigits = tailRaw.split("").filter(d => /^[0-9]$/.test(d));
 
-  if (digits.length < 5 || digits.length > 9) {
-    alert("Masukkan 5–9 digit utama tanpa spasi.");
-    return;
-  }
+  const useGenap = document.getElementById("filterGenap").checked;
+  const useGanjil = document.getElementById("filterGanjil").checked;
+  const useKepala = document.getElementById("filterKepala").checked;
+  const barisGanjil = document.getElementById("filterBarisGanjil").checked;
 
-  if (filterDigits.length < 4 || filterDigits.length > 6) {
-    alert("Masukkan angka main 4–6 digit.");
-    return;
-  }
+  const resultTable = document.getElementById("resultTable");
+  const shioTable = document.getElementById("shioTable");
+  const totalCount = document.getElementById("totalCount");
 
-  if (tailDigits.length < 4 || tailDigits.length > 6) {
-    alert("Masukkan ekor main 4–6 digit.");
-    return;
-  }
+  // Reset tampilan
+  resultTable.innerHTML = '';
+  shioTable.innerHTML = '';
+  totalCount.textContent = '0';
+
+  if (digits.length < 5 || digits.length > 9) return;
+  if (filterDigits.length < 4 || filterDigits.length > 6) return;
+  if (tailDigits.length < 4 || tailDigits.length > 6) return;
 
   let result = [];
 
   for (let i = 0; i < digits.length; i++) {
     for (let j = 0; j < digits.length; j++) {
-      const kombinasi = digits[i] + digits[j];
       const depan = digits[i];
       const belakang = digits[j];
+      const kombinasi = depan + belakang;
 
-      if ((filterDigits.includes(depan) || filterDigits.includes(belakang)) &&
-          tailDigits.includes(belakang)) {
+      if (
+        (filterDigits.includes(depan) || filterDigits.includes(belakang)) &&
+        tailDigits.includes(belakang)
+      ) {
+        if (useGenap && !isGenap(kombinasi)) continue;
+        if (useGanjil && isGenap(kombinasi)) continue;
+        if (useKepala && !tailDigits.includes(depan)) continue;
+
         result.push(kombinasi);
       }
     }
   }
 
-  // Tambahkan twin dari angka yang termasuk angkaMain dan juga ekor
+  // Tambahkan twin
   const twins = filterDigits.filter(d => tailDigits.includes(d)).map(d => d + d);
   result.push(...twins);
 
-  const unique = [...new Set(result)];
-  document.getElementById("output").value = unique.join("*");
-  document.getElementById("totalCount").textContent = unique.length;
+  // Hapus duplikat
+  let unique = [...new Set(result)];
 
-  // Distribusi Shio
-  const shioTable = document.getElementById("shioTable");
-  shioTable.innerHTML = "";
-  for (const [shio, angkaList] of Object.entries(shioMap)) {
-    const match = unique.filter(k => angkaList.includes(k));
+  // Tampilkan sebagai tabel baris-kolom
+  const colsPerRow = 8;
+  let visibleRow = 0;
+  for (let i = 0; i < unique.length; i += colsPerRow) {
+    visibleRow++;
+    if (barisGanjil && visibleRow % 2 === 0) continue;
+
+    const row = resultTable.insertRow();
+    for (let j = 0; j < colsPerRow; j++) {
+      const val = unique[i + j];
+      const cell = row.insertCell();
+      cell.textContent = val || "";
+    }
+  }
+
+  totalCount.textContent = unique.length;
+
+  for (const [shio, list] of Object.entries(shioMap)) {
+    const match = unique.filter(k => list.includes(k));
     if (match.length > 0) {
-      const row = `<tr><td>${shio}</td><td>${match.join(", ")}</td></tr>`;
-      shioTable.innerHTML += row;
+      shioTable.innerHTML += `<tr><td>${shio}</td><td>${match.join(", ")}</td></tr>`;
     }
   }
 }
